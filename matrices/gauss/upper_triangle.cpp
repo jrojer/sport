@@ -5,10 +5,10 @@
 using row_t = std::vector<float>;
 using matr_t = std::vector<row_t>;
 
+static const float eps = 0.000001f;
 
 matr_t ToUpperTriangle(const matr_t& matrix)
 {
-    const float eps = 0.0001;
     auto M = matrix;
     const size_t nrows = M.size();
     const size_t ncols = M.begin()->size();
@@ -17,21 +17,23 @@ matr_t ToUpperTriangle(const matr_t& matrix)
     {
         for(size_t k = i; k < nrows; ++k)
         {
-            if(M[k][i] < eps)
+            if(std::abs(M[k][i]) > eps)
             {
                 std::swap(M[k],M[i]);
                 break;
             }
         }
-        if(M[i][i] < eps)
+        if(std::abs(M[i][i]) < eps)
         {
             break;
         }
         for(size_t k = i+1; k < nrows; ++k)
         {
+            auto a = M[k][i];
+            auto b = M[i][i];
             for(size_t j = i; j < ncols; ++j)
             {
-                M[k][j] -= M[i][j] * M[k][i] / M[i][i];
+                M[k][j] -= M[i][j] * a / b ;
             }
         }
     }
@@ -48,20 +50,25 @@ matr_t ReadInput()
     {
         for(int j = 0; j < m; ++j)
         {
-            int val = 0;
-            std::cin >> val;
+            float val = 0;
+            scanf_s("%f", &val);
             matrix[i][j] = val;
         }
     }
     return matrix;
 }
 
+double round3(double x)
+{
+    return abs(x) < eps ? 0.0 : round(x * 1000) / 1000;
+}
+
 void PrintRow(const row_t& row)
 {
     size_t i = 0;
-    for(; i < row.size(); ++i)
-        std::cout << row[i] << " ";
-    std::cout << row.back() << std::endl;
+    for(; i + 1 < row.size(); ++i)
+        printf("%.3f ", round3(row[i]));
+    printf("%.3f\n", round3(row.back()));
 }
 
 void PrintOutput(const matr_t& m)
@@ -70,10 +77,22 @@ void PrintOutput(const matr_t& m)
         PrintRow(r);
 }
 
+void test()
+{
+    printf("%.3f ", round3(-0.000005));
+    printf("%.3f ", round3(-1.0005));
+    printf("%.3f ", round3(0.0005));
+    printf("%.3f ", round3(0.0002));
+    printf("%.3f ", round3(-1.0002));
+    printf("%.3f ", round3(1.0019));
+    puts("");
+}
+
 int main()
 {
+    test();
+    FILE* dummy = nullptr;
+    freopen_s(&dummy, R"(E:\works\sport\upper_triangle\Debug\test5.txt)", "r", stdin);
     PrintOutput(ToUpperTriangle(ReadInput()));
     return 0;
 }
-
-
