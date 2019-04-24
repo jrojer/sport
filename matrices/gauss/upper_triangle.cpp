@@ -2,10 +2,10 @@
 #include <vector>
 #include <algorithm>
 
-using row_t = std::vector<float>;
+using row_t = std::vector<double>;
 using matr_t = std::vector<row_t>;
 
-static const float eps = 0.000001f;
+static const double eps = 0.00001;
 
 matr_t ToUpperTriangle(const matr_t& matrix)
 {
@@ -44,14 +44,14 @@ matr_t ReadInput()
 {
     int n = 0;
     int m = 0;
-    std::cin >> n >> m;
+    scanf("%d %d",&n,&m);
     matr_t matrix(n,row_t(m));
     for(int i = 0; i < n; ++i)
     {
         for(int j = 0; j < m; ++j)
         {
-            float val = 0;
-            scanf_s("%f", &val);
+            double val = 0;
+            scanf("%lf", &val);
             matrix[i][j] = val;
         }
     }
@@ -60,15 +60,15 @@ matr_t ReadInput()
 
 double round3(double x)
 {
-    return abs(x) < eps ? 0.0 : round(x * 1000) / 1000;
+    return abs(x) < eps ? 0.0 : round(x * 10) / 10;
 }
 
 void PrintRow(const row_t& row)
 {
     size_t i = 0;
     for(; i + 1 < row.size(); ++i)
-        printf("%.3f ", round3(row[i]));
-    printf("%.3f\n", round3(row.back()));
+        printf("%.1f ", round3(row[i]));
+    printf("%.1f\n", round3(row.back()));
 }
 
 void PrintOutput(const matr_t& m)
@@ -90,9 +90,6 @@ void test()
 
 int main()
 {
-    test();
-    FILE* dummy = nullptr;
-    freopen_s(&dummy, R"(E:\works\sport\upper_triangle\Debug\test5.txt)", "r", stdin);
     PrintOutput(ToUpperTriangle(ReadInput()));
     return 0;
 }
