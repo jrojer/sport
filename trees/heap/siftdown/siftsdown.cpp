@@ -60,16 +60,18 @@ private:
             {
                 int& c = array_[2*i+1];
 
-                if(a <= b && b <= c)        {swap(a,c); i = 2*i+1;}
-                else if(a <= c && c <= b)   {swap(a,b); i = 2*i;}
-                else if(b <= a && a <= c)   {swap(a,c); i = 2*i+1;}
-                else if(c <= a && a <= b)   {swap(a,b); i = 2*i;}
+                if(a <= b && b < c)       {swap(a,c); i = 2*i+1;}
+                else if(a <= c && c < b)  {swap(a,b); i = 2*i;}
+                else if(b < a && a < c)   {swap(a,c); i = 2*i+1;}
+                else if(c < a && a < b)   {swap(a,b); i = 2*i;}
                 else 
                     break; 
             }
             else // only one 
             {
-                if(b > a) {swap(b,a); i = 2*i;} 
+                if(b > a) { swap(b, a); i = 2 * i; }
+                else
+                    break;
             }
         }
         return i;
