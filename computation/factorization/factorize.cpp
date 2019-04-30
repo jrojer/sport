@@ -18,7 +18,6 @@ std::vector<int> FastFactorize(int n)
     return res;
 }
 
-
 void PrintArray(const std::vector<int>& array)
 {
     size_t i = 0;
@@ -28,7 +27,7 @@ void PrintArray(const std::vector<int>& array)
     }
     printf("%d\n", array[i]);
 }
-
+
 int main()
 {
     int n;
