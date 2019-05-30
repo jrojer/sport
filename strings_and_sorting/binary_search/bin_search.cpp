@@ -14,10 +14,8 @@ struct Item
     size_t pos;
 };
 
-SearchResult BinarySearch(const std::vector<Item>& given_seq, int value)
+SearchResult BinarySearch(const std::vector<Item>& seq, int value)
 {
-    auto seq = given_seq;
-    std::sort(seq.begin(),seq.end(),[](const auto& i, const auto& j){return i.value <= j.value;});
     size_t a = 0;
     size_t b = seq.size();
     while(b-a > 1)
@@ -61,6 +59,7 @@ int main()
     std::cin >> n;
     auto seq = ReadSeq(n);
     std::cin >> k;
+    std::stable_sort(seq.begin(),seq.end(),[](const auto& i, const auto& j){return i.value <= j.value;});
     for(size_t i= 0; i< k;++i)
     {
         int val;
