@@ -1,0 +1,46 @@
+# 0
+
+input begin
+3 50
+60 20
+100 50
+120 30
+input end
+
+output begin
+180.000
+output end
+
+# 1
+
+input begin
+1 0 
+100 100
+input end
+
+output begin
+0.000
+output end
+
+# 2
+
+input begin
+1 1 
+1 100
+input end
+
+output begin
+0.010
+output end
+
+# 3
+
+input begin
+2 1 
+1 100
+100 2
+input end
+
+output begin
+50.000
+output end
