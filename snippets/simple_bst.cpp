@@ -26,9 +26,59 @@ struct Bst
     }
     int Next(int x)
     {
+        return Next(x,false);
     }
     int Prev(int x)
     {
+        return Next(x,true);
+    }
+    int Next(int x, bool reversed)
+    {
+        auto node = Find(x, false);
+        if (!node)
+        {
+            return kNone;
+        }
+        if (reversed)
+        {
+            if (node->left)
+            {
+                node = node->left;
+                while (node->right)
+                {
+                    node = node->right;
+                }
+                return node->val;
+            }
+        }
+        else
+        {
+            if (node->right)
+            {
+                node = node->right;
+                while (node->left)
+                {
+                    node = node->left;
+                }
+                return node->val;
+            }
+        }
+        if(reversed && !node->left || !reversed && !node->right)
+        {
+            while (node->parent)
+            {
+                auto node2 = reversed ? node->parent->left : node->parent->right;
+                if (node2 == node)
+                {
+                    node = node->parent;
+                }
+                else
+                {
+                    return node->parent->val;
+                }
+            }
+            return kNone;
+        }
     }
     shared_ptr<Node> Find(int x, bool insert)
     {
