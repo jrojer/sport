@@ -1,3 +1,14 @@
-3
-2 2 2
-2 3 1
+insert 8
+insert 6
+insert 10 
+insert 5
+insert 7
+insert 12
+insert 9
+exists 6
+delete 6
+exists 6
+next 6
+prev 6
+next 5
+prev 8
