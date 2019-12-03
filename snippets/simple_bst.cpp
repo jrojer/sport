@@ -1,43 +1,84 @@
-#include <iostream>
 #include <climits>
+#include <iostream>
 #include <memory>
+#include <string>
 
 using namespace std;
 
 struct Bst
 {
     struct Node;
-    void Insert(int x)
-    {
-        Find(x, true);
-    }
+    void Insert(int x) { Find(x, true); }
     void Delete(int x)
     {
-        auto node = Find(x, false);
+        Delete(Find(x,false));
+    }
+    void Delete(shared_ptr<Node> node)
+    {
         if (!node)
         {
             return;
         }
-        //if ...
+        if (node->left && !node->right)
+        {
+            node->left->parent = node->parent;
+            if (node->parent->left == node)
+            {
+                node->parent->left = node->left;
+            }
+            else
+            {
+                node->parent->right = node->left;
+            }
+        }
+        else if (!node->left && node->right)
+        {
+            node->right->parent = node->parent;
+            if (node->parent->left == node)
+            {
+                node->parent->left = node->right;
+            }
+            else
+            {
+                node->parent->right = node->right;
+            }
+        }
+        else if (!node->left && !node->right)
+        {
+            if (node->parent->left == node)
+            {
+                node->parent->left = nullptr;
+            }
+            else
+            {
+                node->parent->right = nullptr;
+            }
+        }
+        else
+        {
+            auto next_node = Next(node,false);
+            std::swap(node->val, next_node->val);
+            Delete(next_node);
+        }
     }
-    bool Exists(int x)
+    bool Exists(int x) { return static_cast<bool>(Find(x, false)); }
+    int  Next(int x)
     {
-        return static_cast<bool>(Find(x, false));
-    }
-    int Next(int x)
-    {
-        return Next(x,false);
+        auto node      = Find(x, false);
+        auto next_node = Next(node, false);
+        return next_node == nullptr ? kNone : next_node->val;
     }
     int Prev(int x)
     {
-        return Next(x,true);
+        auto node      = Find(x, false);
+        auto next_node = Next(node, true);
+        return next_node == nullptr ? kNone : next_node->val;
     }
-    int Next(int x, bool reversed)
+    shared_ptr<Node> Next(shared_ptr<Node> node, bool reversed)
     {
-        auto node = Find(x, false);
         if (!node)
         {
-            return kNone;
+            return nullptr;
         }
         if (reversed)
         {
@@ -48,7 +89,7 @@ struct Bst
                 {
                     node = node->right;
                 }
-                return node->val;
+                return node;
             }
         }
         else
@@ -60,10 +101,10 @@ struct Bst
                 {
                     node = node->left;
                 }
-                return node->val;
+                return node;
             }
         }
-        if(reversed && !node->left || !reversed && !node->right)
+        if (reversed && !node->left || !reversed && !node->right)
         {
             while (node->parent)
             {
@@ -74,17 +115,17 @@ struct Bst
                 }
                 else
                 {
-                    return node->parent->val;
+                    return node->parent;
                 }
             }
-            return kNone;
+            return nullptr;
         }
     }
     shared_ptr<Node> Find(int x, bool insert)
     {
-        auto node = root_;
-        bool found_insert_position = false;
-        shared_ptr<Node> existing_node = nullptr;
+        auto             node                  = root_;
+        bool             found_insert_position = false;
+        shared_ptr<Node> existing_node         = nullptr;
         if (!node)
         {
             if (insert)
@@ -128,7 +169,7 @@ struct Bst
             else
             {
                 found_insert_position = true;
-                existing_node = node;
+                existing_node         = node;
             }
         }
         return existing_node;
@@ -137,7 +178,7 @@ struct Bst
     struct Node
     {
         Node(int x) : val(x) {}
-        int val;
+        int              val;
         shared_ptr<Node> parent;
         shared_ptr<Node> left;
         shared_ptr<Node> right;
@@ -187,6 +228,10 @@ int main()
                 cout << val;
             }
             cout << endl;
+        }
+        else if (cmd == "delete")
+        {
+            bst.Delete(val);
         }
     }
 
