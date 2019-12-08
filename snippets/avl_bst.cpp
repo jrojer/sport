@@ -2,6 +2,8 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <cassert>
+#include <deque>
 
 using namespace std;
 
@@ -29,14 +31,12 @@ struct Bst
                 if (node->parent->left == node)
                 {
                     node->parent->left = node->left;
-                    ++node->parent->diff;
                 }
                 else
                 {
                     node->parent->right = node->left;
-                    --node->parent->diff;
                 }
-                Rebalance(node->parent);
+                Rebalance(node->parent, kDelete);
             }
             else
             {
@@ -52,14 +52,12 @@ struct Bst
                 if (node->parent->left == node)
                 {
                     node->parent->left = node->right;
-                    ++node->parent->diff;
                 }
                 else
                 {
                     node->parent->right = node->right;
-                    --node->parent->diff;
                 }
-                Rebalance(node->parent);
+                Rebalance(node->parent, kDelete);
             }
             else
             {
@@ -74,14 +72,12 @@ struct Bst
                 if (node->parent->left == node)
                 {
                     node->parent->left = nullptr;
-                    ++node->parent->diff;
                 }
                 else
                 {
                     node->parent->right = nullptr;
-                    --node->parent->diff;
                 }
-                Rebalance(node->parent);
+                Rebalance(node->parent, kDelete);
             }
             else
             {
@@ -161,48 +157,120 @@ struct Bst
     struct FindResult
     {
         bool inserted;
-        shared_ptr<Node> node;
+        node_t node;
     };
-    void Rebalance(node_t node /*, may be need diff change count to pass it upwards*/)
+    void UpdateHeight(node_t& a)
     {
-        if(node->diff == -2)
+        if(!a)
         {
-            if(node->right)
+            return;
+        }
+        if(!a->left && !a->right) // leaf
+        {
+            a->height = 0;
+        }
+        else
+        {
+            int left_height = a->left ? a->left->height : 0;
+            int right_height = a->right ? a->right->height : 0;
+            a->height = 1 + max(left_height, right_height);
+        }
+    }
+    void RotateLeft(node_t a)
+    {
+        node_t b = a->right;
+        a->right = b->left;
+        b->left->parent = a;
+        b->left = a;
+        b->parent = a->parent;
+        if(a->parent)
+        {
+            if (a->parent->left == a)
             {
-                if(node->right->diff < 1)
-                {
-                    // small left rotatiton
-                }
-                else
-                {
-                    // big left rotation
-                }
+                a->parent->left = b;
             }
             else
             {
-                // ???
+                a->parent->right = b;
             }
         }
-        else if(node->diff == 2)
+        a->parent = b;
+        UpdateHeight(a);
+        UpdateHeight(b);
+    }
+    void RotateRight(node_t b)
+    {
+        node_t a = b->left;
+        b->left = a->right;
+        a->right->parent = b;
+        a->right = b;
+        a->parent = b->parent;
+        if(b->parent)
         {
-            if(node->left)
+            if (b->parent->left == b)
             {
-                if(node->left->diff > -1)
-                {
-                    // small right rotatiton
-                }
-                else
-                {
-                    // big right rotation
-                }
+                b->parent->left = a;
             }
             else
             {
-                // ???
+                b->parent->right = a;
             }
         }
-        // probably we know beforehand how the rotation changes the height 
-        // update diff upwards
+        b->parent = a;
+        UpdateHeight(a);
+        UpdateHeight(b);
+    }
+    void BigRotateLeft(node_t a)
+    {
+        RotateRight(a->right);
+        RotateLeft(a);
+    }
+    void BigRotateRight(node_t a)
+    {
+        RotateLeft(a->left);
+        RotateRight(a);
+    }
+    int diff(node_t a)
+    {
+        if(!a)
+        {
+            return 0;
+        }
+        int left_height = a->left ? a->left->height : 0;
+        int right_height = a->right ? a->right->height : 0;
+        return left_height - right_height; 
+    }
+    enum RebalanceMode {kDelete, kInsert};
+    void Rebalance(node_t node, RebalanceMode mode)
+    {
+        UpdateHeight(node);
+        if(!node || (diff(node) == 0 && mode == kInsert || abs(diff(node)) == 1 && mode == kDelete))
+        {
+            return;
+        }
+        if (diff(node) == -2)
+        {
+            if (diff(node->right) < 1)
+            {
+                RotateLeft(node); 
+            }
+            else
+            {
+                BigRotateLeft(node); 
+            }
+        }
+        else if (diff(node) == 2)
+        {
+            if (diff(node->left) > -1)
+            {
+                RotateRight(node);
+            }
+            else
+            {
+                BigRotateRight(node);
+            }
+        }
+        Rebalance(node->parent, mode);
     }
     FindResult Find(int x, bool insert)
     {
@@ -236,8 +304,7 @@ struct Bst
                         requested_node->parent = node;
                         node->right = requested_node;
                         inserted = true;
-                        --node->diff; 
-                        Rebalance(node);
+                        Rebalance(node, kInsert);
                     }
                     found_insert_position = true;
                 }
@@ -256,8 +323,7 @@ struct Bst
                         requested_node->parent = node;
                         node->left = requested_node;
                         inserted = true;
-                        ++node->diff; 
-                        Rebalance(node);
+                        Rebalance(node, kInsert);
                     }
                     found_insert_position = true;
                 }
@@ -270,17 +336,43 @@ struct Bst
         }
         return FindResult{inserted, requested_node};
     }
+    void Print()
+    {
+        deque<node_t> fifo;
+        fifo.push_back(root_);
+        while(!fifo.empty())
+        {
+            size_t level_len = fifo.size();
+            for(size_t i = 0; i < level_len; ++i)
+            {
+                node_t node = fifo.front();
+                fifo.pop_front();
+                if(node != nullptr)
+                {
+                    printf(" %3d ", node->val);
+                    fifo.push_back(node->left);
+                    fifo.push_back(node->right);
+                }
+                else
+                {
+                    printf(" --- ");
+                }
+            }
+            printf("\n");
+        }
+        puts("_______________________");
+    }
     static const int kNone = INT_MAX;
     struct Node
     {
         Node(int x) : val(x) {}
         int val;
-        shared_ptr<Node> parent;
-        shared_ptr<Node> left;
-        shared_ptr<Node> right;
-        int diff = 0;
+        node_t parent;
+        node_t left;
+        node_t right;
+        int height = 0;
     };
-    shared_ptr<Node> root_;
+    node_t root_;
 };
 
 int main()
@@ -289,6 +381,7 @@ int main()
     Bst bst;
     while (!cin.eof())
     {
+        bst.Print();
         string cmd;
         cin >> cmd;
         int val;
