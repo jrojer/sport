@@ -4,6 +4,7 @@
 #include <string>
 #include <cassert>
 #include <deque>
+#include <algorithm>
 
 using namespace std;
 
@@ -165,22 +166,18 @@ struct Bst
         {
             return;
         }
-        if(!a->left && !a->right) // leaf
-        {
-            a->height = 0;
-        }
-        else
-        {
-            int left_height = a->left ? a->left->height : 0;
-            int right_height = a->right ? a->right->height : 0;
-            a->height = 1 + max(left_height, right_height);
-        }
+        int left_height = a->left ? a->left->height : 0;
+        int right_height = a->right ? a->right->height : 0;
+        a->height = 1 + max(left_height, right_height);
     }
     void RotateLeft(node_t a)
     {
         node_t b = a->right;
         a->right = b->left;
-        b->left->parent = a;
+        if(b->left)
+        {
+            b->left->parent = a;
+        }
         b->left = a;
         b->parent = a->parent;
         if(a->parent)
@@ -195,6 +192,10 @@ struct Bst
             }
         }
         a->parent = b;
+        if(root_ == a) // a was root
+        {
+            root_ = b;
+        }
         UpdateHeight(a);
         UpdateHeight(b);
     }
@@ -202,7 +203,10 @@ struct Bst
     {
         node_t a = b->left;
         b->left = a->right;
-        a->right->parent = b;
+        if(a->right)
+        {
+            a->right->parent = b;
+        }
         a->right = b;
         a->parent = b->parent;
         if(b->parent)
@@ -217,8 +221,12 @@ struct Bst
             }
         }
         b->parent = a;
-        UpdateHeight(a);
+        if(root_ == b) // b was root
+        {
+            root_ = a;
+        }
         UpdateHeight(b);
+        UpdateHeight(a);
     }
     void BigRotateLeft(node_t a)
     {
@@ -244,11 +252,12 @@ struct Bst
     void Rebalance(node_t node, RebalanceMode mode)
     {
         UpdateHeight(node);
-        if(!node || (diff(node) == 0 && mode == kInsert || abs(diff(node)) == 1 && mode == kDelete))
+        const int diff_node = diff(node);
+        if(!node || (diff_node == 0 && mode == kInsert || abs(diff_node) == 1 && mode == kDelete))
         {
             return;
         }
-        if (diff(node) == -2)
+        if (diff_node == -2)
         {
             if (diff(node->right) < 1)
             {
@@ -259,7 +268,7 @@ struct Bst
                 BigRotateLeft(node); 
             }
         }
-        else if (diff(node) == 2)
+        else if (diff_node == 2)
         {
             if (diff(node->left) > -1)
             {
@@ -370,14 +379,14 @@ struct Bst
         node_t parent;
         node_t left;
         node_t right;
-        int height = 0;
+        int height = 1;
     };
     node_t root_;
 };
 
 int main()
 {
-    freopen("input.txt", "r", stdin);
+    freopen(R"(E:\projects\csc\sport\sources\input.txt)", "r", stdin);
     Bst bst;
     while (!cin.eof())
     {
