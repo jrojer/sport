@@ -98,11 +98,12 @@ struct Bst
         auto res = Find(x, true);
         auto node = res.node;
         auto next_node = Next(node, reversed);
+        int next_val = next_node == nullptr ? kNone : next_node->val;
         if (res.inserted)
         {
             Delete(node);
         }
-        return next_node == nullptr ? kNone : next_node->val;
+        return next_val;
     }
     int Prev(int x)
     {
