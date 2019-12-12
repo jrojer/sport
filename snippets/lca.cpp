@@ -11,11 +11,10 @@ using namespace std;
 
 struct Lca
 {
-    explicit Lca(const vector<int> &parent)
+    explicit Lca(const vector<int> &parent, int n)
     {
-        size_t n = parent.size() - 1;
-        logn = flog(n) + 1;
-        dp_ = vector<vector<int>>(n, vector<int>(logn));
+        logn = flog(n);
+        dp_ = vector<vector<int>>(n+1, vector<int>(logn + 1));
         for (int i = 1; i <= n; ++i)
         {
             dp_[i][0] = parent[i];
@@ -26,6 +25,18 @@ struct Lca
             {
                 dp_[i][j] = dp_[dp_[i][j - 1]][j - 1];
             }
+        }
+        d_.resize(n+1);
+        for (int i = 1; i <= n; ++i)
+        {
+            int depth = 0;
+            int j = i;
+            while(parent[j] != j)
+            {
+                ++depth;
+                j = parent[j];
+            }
+            d_[i] = depth;
         }
     }
     int Get(int u, int v)
@@ -53,7 +64,7 @@ struct Lca
                 u = dp_[u][i];
             }
         }
-        return parent[v];
+        return dp_[v][0];
     }
     size_t flog(size_t len)
     {
@@ -74,17 +85,18 @@ struct Lca
 
 int main()
 {
-    freopen("input.txt", "r", stdin);
+    freopen(R"(E:\projects\csc\sport\sources\input.txt)", "r", stdin);
     int n;
     cin >> n;
     std::vector<int> parent(n + 1);
-    for (int i = 1; i + 1 <= n; ++i)
+    parent[1] = 1;
+    for (int i = 2; i <= n; ++i)
     {
         int x;
         cin >> x;
         parent[i] = x;
     }
-    Lca lca(parent);
+    Lca lca(parent, n);
     int m;
     cin >> m;
     for (int i = 0; i < m; ++i)
