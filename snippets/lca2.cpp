@@ -12,29 +12,32 @@ using namespace std;
 struct DepthInfo
 {
     vector<int> depth;
-    size_t max_depth;
+    int max_depth;
 };
 
-DepthInfo CalculateDepth(const vector<int> &parent, size_t n)
+DepthInfo CalculateDepth(const vector<vector<int>> &incidence_list, size_t n)
 {
-    vector<int> res(n + 1);
-    size_t max_depth = 0;
-    for (int i = 1; i <= n; ++i)
+    int max_depth = 0;
+    vector<int> depth(n + 1);
+    int root = 1;
+    vector<int> stack;
+    stack.push_back(root);
+    depth[root] = 0;
+    while(!stack.empty())
     {
-        int depth = 0;
-        int j = i;
-        while (parent[j] != j)
+        int node = stack.back();
+        stack.pop_back();
+        if(depth[node] > max_depth)
         {
-            ++depth;
-            j = parent[j];
+            max_depth = depth[node];
         }
-        res[i] = depth;
-        if (depth > max_depth)
+        for(int child: incidence_list[node])
         {
-            max_depth = depth;
+            depth[child] = depth[node] + 1;
+            stack.push_back(child);
         }
     }
-    return {res, max_depth};
+    return {depth, max_depth};
 }
 
 vector<vector<int>> CalculateDp(const vector<int> &parent, size_t n, size_t height)
@@ -66,8 +69,8 @@ vector<vector<int>> CalculateDp(const vector<int> &parent, size_t n, size_t heig
 
 struct Lca
 {
-    explicit Lca(const vector<int> &parent, size_t n) : di_(CalculateDepth(parent, n)),
-                                                        dp_(CalculateDp(parent, n, di_.max_depth))
+    explicit Lca(const vector<int> &parent, const DepthInfo &di, size_t n) : di_(di),
+                                                                             dp_(CalculateDp(parent, n, di_.max_depth))
     {
     }
     /*
@@ -94,7 +97,7 @@ struct Lca
             swap(u, v);
         }
         int d = di_.depth[u] - di_.depth[v];
-        for (int p2 = dp_.size()-1; p2 >= 0; --p2)
+        for (int p2 = dp_.size() - 1; p2 >= 0; --p2)
         {
             if (d >= (1 << p2))
             {
@@ -102,7 +105,7 @@ struct Lca
                 u = dp_[p2][u];
             }
         }
-        assert (di_.depth[u] == di_.depth[v]);
+        assert(di_.depth[u] == di_.depth[v]);
         if (v == u)
         {
             return v;
@@ -111,17 +114,18 @@ struct Lca
         {
             int x = u;
             int y = v;
-            int k = 0;
-            while(dp_[k][x] != dp_[k][y])
+            int k0 = 0;
+            while (dp_[k0][x] != dp_[k0][y])
             {
-                while (dp_[k][x] != dp_[k][y])
+                ++k0;
+            }
+            for (int k = k0; k >= 0; --k)
+            {
+                if (dp_[k][x] != dp_[k][y])
                 {
-                    ++k;
+                    x = dp_[k][x];
+                    y = dp_[k][y];
                 }
-                --k;
-                x = dp_[k][x];
-                y = dp_[k][y];
-                k = 0;
             }
             return dp_[0][x];
         }
@@ -137,6 +141,7 @@ int main()
     freopen("input.txt", "r", stdin);
     int n;
     cin >> n;
+    vector<vector<int>> incidence_list(n + 1);
     std::vector<int> parent(n + 1);
     parent[1] = 1;
     for (int i = 2; i <= n; ++i)
@@ -144,8 +149,9 @@ int main()
         int x;
         cin >> x;
         parent[i] = x;
+        incidence_list[x].push_back(i);
     }
-    Lca lca(parent, n);
+    Lca lca(parent, CalculateDepth(incidence_list, n), n);
     int m;
     cin >> m;
     for (int i = 0; i < m; ++i)
