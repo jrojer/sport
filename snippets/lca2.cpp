@@ -94,7 +94,7 @@ struct Lca
             swap(u, v);
         }
         int d = di_.depth[u] - di_.depth[v];
-        for (int p2 = di_.max_depth; p2 >= 0; --p2)
+        for (int p2 = dp_.size()-1; p2 >= 0; --p2)
         {
             if (d >= (1 << p2))
             {
@@ -121,6 +121,7 @@ struct Lca
                 --k;
                 x = dp_[k][x];
                 y = dp_[k][y];
+                k = 0;
             }
             return dp_[0][x];
         }
@@ -131,6 +132,8 @@ struct Lca
 
 int main()
 {
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
     freopen("input.txt", "r", stdin);
     int n;
     cin >> n;
@@ -149,7 +152,7 @@ int main()
     {
         int u, v;
         cin >> u >> v;
-        cout << lca.Get(u, v) << endl;
+        cout << lca.Get(u, v) << '\n';
     }
     return 0;
 }
