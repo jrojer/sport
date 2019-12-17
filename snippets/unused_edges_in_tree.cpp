@@ -3,9 +3,9 @@
 
 using namespace std;
 
-struct Lca
+struct Lca3
 {
-    Lca(const vector<vector<int>> &g) : g(g)
+    Lca3(const vector<vector<int>> &g) : g(g)
     {
         n = g.size();
         tin.resize(n);
@@ -103,54 +103,107 @@ struct Lca
     vector<vector<int>> up;
 };
 
-/* 
- line x
-    2 1 
-    3 1
-    4 2
-    5 3
-
-    tree:
-        1
-      2   3
-      4   5
-    ___________
- line x
-    2 1
-    3 1
-    4 2
-    5 2
-    2
-
-    tree:
-        1
-      2   3
-    4   5
-*/
+struct DisjointSetUnion
+{
+    DisjointSetUnion(size_t n) : parent_(n), height_(n)
+    {
+        for (size_t i = 0; i < n; ++i)
+        {
+            parent_[i] = i;
+        }
+    }
+    int Get(int x)
+    {
+        while (parent_[x] != x)
+        {
+            x = parent_[x];
+        }
+        return x;
+    }
+    bool Union(int x, int y)
+    {
+        x = Get(x);
+        y = Get(y);
+        if (x == y)
+        {
+            return false;
+        }
+        if (height_[x] == height_[y])
+        {
+            parent_[x] = y;
+            ++height_[y];
+        }
+        else if (height_[x] < height_[y])
+        {
+            parent_[x] = y;
+        }
+        else
+        {
+            parent_[y] = x;
+        }
+        return true;
+    }
+    vector<int> parent_;
+    vector<int> height_;
+};
 
 int main()
 {
+    // read n
+    // read incidence list
+    // init dsu with n
+    // init lca
+    // node 1 is the root
+    // get parent array from lca
+    // for each request
+    //   find lca
+    //   join node with lca up to lca node
+    //   join second branch as well
+    //   count used edges
+
     ios_base::sync_with_stdio(0);
     cin.tie(0);
-    //freopen("input.txt", "r", stdin);
-    freopen("lca2_large_input.txt", "r", stdin);
+    freopen("input.txt", "r", stdin);
     int n;
     cin >> n;
     vector<vector<int>> incidence_list(n);
-    for (int i = 2; i <= n; ++i)
-    {
-        int x;
-        cin >> x;
-        incidence_list[x - 1].push_back(i - 1);
-    }
-    Lca lca(incidence_list);
-    int m;
-    cin >> m;
-    for (int i = 0; i < m; ++i)
+    for (int i = 1; i < n; ++i)
     {
         int u, v;
         cin >> u >> v;
-        cout << lca.lca(u - 1, v - 1) + 1 << '\n';
+        --u;
+        --v;
+        incidence_list[u].push_back(v);
+        incidence_list[v].push_back(u);
     }
+    DisjointSetUnion dsu(n);
+    Lca3 lca(incidence_list);
+    int m;
+    cin >> m;
+    int num_used_edges = 0;
+    for (int i = 0; i < m; ++i)
+    {
+        int x,y;
+        cin >> x >> y;
+        x = dsu.Get(x);
+        y = dsu.Get(y);
+        int l = lca.lca(x,y);
+        l = dsu.Get(l);
+        while(x != l)
+        {
+            dsu.Union(x, l);
+            ++num_used_edges;
+            x = lca.up[x][0];
+            x = dsu.Get(x); 
+        }
+        while(y != l)
+        {
+            dsu.Union(y, l);
+            ++num_used_edges;
+            y = lca.up[y][0];
+            y = dsu.Get(y); 
+        }
+    }
+    cout << n-1 - num_used_edges << "\n";
     return 0;
 }
