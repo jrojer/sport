@@ -12,6 +12,7 @@ struct Lca3
         tin.resize(n);
         tout.resize(n);
         up.resize(n);
+        depth.resize(n);
         l = 1;
         while ((1 << l) <= n)
         {
@@ -30,12 +31,13 @@ struct Lca3
         int v;
         int i;
         bool visited;
+        int depth;
     };
 
     void dfs(int v, int p = 0)
     {
         vector<StackItem> stack;
-        stack.push_back({v, p, 0, false});
+        stack.push_back({v, p, 0, false, 0});
         while (!stack.empty())
         {
             auto item = stack.back();
@@ -52,6 +54,8 @@ struct Lca3
                 {
                     up[v][i] = up[up[v][i - 1]][i - 1];
                 }
+
+                depth[v] = item.depth;
             }
             int i = item.i;
             if (i < g[v].size())
@@ -64,8 +68,8 @@ struct Lca3
                 if (i < g[v].size())
                 {
                     to = g[v][i];
-                    stack.push_back({v, p, i + 1, true});
-                    stack.push_back({to, v, 0, false});
+                    stack.push_back({v, p, i + 1, true, item.depth});
+                    stack.push_back({to, v, 0, false, item.depth + 1});
                 }
                 else
                 {
@@ -111,15 +115,17 @@ struct Lca3
     vector<int> tout;
     int timer = 0;
     vector<vector<int>> up;
+    vector<int> depth;
 };
 
 struct DisjointSetUnion
 {
-    DisjointSetUnion(size_t n) : parent(n), rank(n)
+    DisjointSetUnion(size_t n, const vector<int> &depth) : parent(n), rank(n), least_deep_node(n), depth(depth)
     {
         for (size_t i = 0; i < n; ++i)
         {
             parent[i] = i;
+            least_deep_node[i] = i;
         }
     }
 
@@ -130,15 +136,22 @@ struct DisjointSetUnion
         return parent[v] = Get(parent[v]);
     }
 
+    int GetLeastDeepNode(int v)
+    {
+        return least_deep_node[Get(v)];
+    }
+
     bool Union(int a, int b)
     {
         a = Get(a);
         b = Get(b);
+        int union_ldn = depth[least_deep_node[a]] < depth[least_deep_node[b]] ? least_deep_node[a] : least_deep_node[b];
         if (a != b)
         {
             if (rank[a] < rank[b])
                 swap(a, b);
             parent[b] = a;
+            least_deep_node[a] = union_ldn;
             if (rank[a] == rank[b])
                 ++rank[a];
             return true;
@@ -147,8 +160,9 @@ struct DisjointSetUnion
     }
     vector<int> parent;
     vector<int> rank;
+    vector<int> least_deep_node;
+    vector<int> depth;
 };
-
 
 int main()
 {
@@ -166,7 +180,7 @@ int main()
 
     ios_base::sync_with_stdio(0);
     cin.tie(0);
-    freopen("input.txt", "r", stdin);
+    freopen("unused_edges_in_tree_input.txt", "r", stdin);
     int n;
     cin >> n;
     vector<vector<int>> incidence_list(n);
@@ -179,32 +193,39 @@ int main()
         incidence_list[u].push_back(v);
         incidence_list[v].push_back(u);
     }
-    DisjointSetUnion dsu(n);
-    //Lca4 lca(incidence_list);
     Lca3 lca3(incidence_list);
+    DisjointSetUnion dsu(n, lca3.depth);
     int m;
     cin >> m;
     int num_used_edges = 0;
     for (int i = 0; i < m; ++i)
     {
-        int x,y;
+        int x, y;
         cin >> x >> y;
         --x;
         --y;
-        x = dsu.Get(x);
-        y = dsu.Get(y);
-        int l = lca3.lca(x,y);
-        while(dsu.Union(x, l))
+        x = dsu.GetLeastDeepNode(x);
+        y = dsu.GetLeastDeepNode(y);
+        int l = lca3.lca(x, y);
+        while(dsu.Get(x) != dsu.Get(l))
         {
-            ++num_used_edges;
-            x = lca3.up[x][0];
+            int u = lca3.up[x][0];
+            if (dsu.Union(x, u))
+            {
+                ++num_used_edges;
+            }
+            x = dsu.GetLeastDeepNode(u);
         }
-        while(dsu.Union(y, l))
+        while(dsu.Get(y) != dsu.Get(l))
         {
-            ++num_used_edges;
-            y = lca3.up[y][0];
+            int u = lca3.up[y][0];
+            if (dsu.Union(y, u))
+            {
+                ++num_used_edges;
+            }
+            y = dsu.GetLeastDeepNode(u);
         }
     }
-    cout << n-1 - num_used_edges << "\n";
+    cout << n - 1 - num_used_edges << "\n";
     return 0;
 }
