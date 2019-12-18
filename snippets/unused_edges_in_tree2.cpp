@@ -1,5 +1,6 @@
 #include <vector>
 #include <iostream>
+#include <cstring>
 
 using namespace std;
 
@@ -114,47 +115,40 @@ struct Lca3
 
 struct DisjointSetUnion
 {
-    DisjointSetUnion(size_t n) : parent_(n), height_(n)
+    DisjointSetUnion(size_t n) : parent(n), rank(n)
     {
         for (size_t i = 0; i < n; ++i)
         {
-            parent_[i] = i;
+            parent[i] = i;
         }
     }
-    int Get(int x)
+
+    int Get(int v)
     {
-        while (parent_[x] != x)
-        {
-            x = parent_[x];
-        }
-        return x;
+        if (v == parent[v])
+            return v;
+        return parent[v] = Get(parent[v]);
     }
-    bool Union(int x, int y)
+
+    bool Union(int a, int b)
     {
-        x = Get(x);
-        y = Get(y);
-        if (x == y)
+        a = Get(a);
+        b = Get(b);
+        if (a != b)
         {
-            return false;
+            if (rank[a] < rank[b])
+                swap(a, b);
+            parent[b] = a;
+            if (rank[a] == rank[b])
+                ++rank[a];
+            return true;
         }
-        if (height_[x] == height_[y])
-        {
-            parent_[x] = y;
-            ++height_[y];
-        }
-        else if (height_[x] < height_[y])
-        {
-            parent_[x] = y;
-        }
-        else
-        {
-            parent_[y] = x;
-        }
-        return true;
+        return false;
     }
-    vector<int> parent_;
-    vector<int> height_;
+    vector<int> parent;
+    vector<int> rank;
 };
+
 
 int main()
 {
@@ -186,7 +180,8 @@ int main()
         incidence_list[v].push_back(u);
     }
     DisjointSetUnion dsu(n);
-    Lca3 lca(incidence_list);
+    //Lca4 lca(incidence_list);
+    Lca3 lca3(incidence_list);
     int m;
     cin >> m;
     int num_used_edges = 0;
@@ -198,21 +193,16 @@ int main()
         --y;
         x = dsu.Get(x);
         y = dsu.Get(y);
-        int l = lca.lca(x,y);
-        l = dsu.Get(l);
-        while(x != l)
+        int l = lca3.lca(x,y);
+        while(dsu.Union(x, l))
         {
-            dsu.Union(x, l);
             ++num_used_edges;
-            x = lca.up[x][0];
-            x = dsu.Get(x); 
+            x = lca3.up[x][0];
         }
-        while(y != l)
+        while(dsu.Union(y, l))
         {
-            dsu.Union(y, l);
             ++num_used_edges;
-            y = lca.up[y][0];
-            y = dsu.Get(y); 
+            y = lca3.up[y][0];
         }
     }
     cout << n-1 - num_used_edges << "\n";
