@@ -1,0 +1,35 @@
+input begin
+7 3
+0
+1
+2
+2
+0
+0
+10
+input end
+
+output begin
+1
+2
+3
+3
+4
+4
+7
+output end
+
+input begin
+4 3
+1
+2
+1
+2
+input end
+
+output begin
+0
+0
+0
+0
+output end
